@@ -9,22 +9,25 @@ description: >
   Contains just base features to verify base HOT support.
 
 parameters:
-  key_name:
-    type: string
-    description: Name of an existing key pair to use for the server
-    constraints:
-      - custom_constraint: nova.keypair
   flavor:
     type: string
-    description: Flavor for the server to be created
-    default: m1.small
+    description: Flavor for the instances to be created
     constraints:
       - custom_constraint: nova.flavor
+        description: Must be a flavor known to Nova
   image:
     type: string
-    description: Image ID or image name to use for the server
+    description: Name or ID of the image to use for the instances.
     constraints:
       - custom_constraint: glance.image
+        description: Must identify an image known to Glance
+
+  network:
+    type: string
+    description: Name or ID of the network to use for the instances
+    constraints:
+      - custom_constraint: neutron.network
+        description: Must identify an network known to Neutron
   admin_pass:
     type: string
     description: Admin password
@@ -48,9 +51,10 @@ resources:
   server:
     type: OS::Nova::Server
     properties:
-      key_name: { get_param: key_name }
       image: { get_param: image }
       flavor: { get_param: flavor }
+      networks:
+        - network: { get_param: network }
       admin_pass: { get_param: admin_pass }
       user_data:
         str_replace:

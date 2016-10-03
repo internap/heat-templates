@@ -9,33 +9,31 @@ description: >
   and one for RegionTwo, using the hello_world.yaml template.
 
 parameters:
-  key_name:
-    type: string
-    description: Name of an existing key pair to use for the server
-    constraints:
-      - custom_constraint: nova.keypair
   flavor:
     type: string
-    description: Flavor for the server to be created
-    default: m1.small
+    description: Flavor for the instances to be created
     constraints:
       - custom_constraint: nova.flavor
+        description: Must be a flavor known to Nova
   image:
     type: string
-    description: Image ID or image name to use for the server
+    description: Name or ID of the image to use for the instances.
     constraints:
       - custom_constraint: glance.image
-  admin_pass:
+        description: Must identify an image known to Glance
+  network:
     type: string
-    description: Admin password
-    hidden: true
+    description: Name or ID of the network to use for the instances
     constraints:
-      - length: { min: 6, max: 8 }
-        description: Password length must be between 6 and 8 characters
-      - allowed_pattern: "[a-zA-Z0-9]+"
-        description: Password must consist of characters and numbers only
-      - allowed_pattern: "[A-Z]+[a-zA-Z0-9]*"
-        description: Password must start with an uppercase character
+      - custom_constraint: neutron.network
+        description: Must identify an network known to Neutron
+  keypair_name:
+    type: string
+    description: Keypair to use
+    constraints:
+      - custom_constraint: nova.keypair
+        description: Must be a keypair known to Nova
+
   db_port:
     type: number
     description: Database port number
@@ -49,28 +47,30 @@ resources:
     type: OS::Heat::Stack
     properties:
       context:
-        region_name: RegionOne
-      template: { get_file: "hello_world.yaml" }
+        region_name: ams01
+      template: { get_file: "https://raw.githubusercontent.com/internap/heat-templates/master/hot/hello_world.yaml" }
       timeout: 60
       parameters:
-        key_name: { get_param: key_name }
         image: { get_param: image }
         flavor: { get_param: flavor }
-        admin_pass: { get_param: admin_pass }
+        key_name: { get_param: keypair_name }
+        networks:
+          - network: { get_param: network }
         db_port: { get_param: db_port }
 
   stack_two:
     type: OS::Heat::Stack
     properties:
       context:
-        region_name: RegionTwo
-      template: { get_file: "hello_world.yaml" }
+        region_name: nyj01
+      template: { get_file: "https://raw.githubusercontent.com/internap/heat-templates/master/hot/hello_world.yaml" }
       timeout: 60
       parameters:
-        key_name: { get_param: key_name }
         image: { get_param: image }
         flavor: { get_param: flavor }
-        admin_pass: { get_param: admin_pass }
+        key_name: { get_param: keypair_name }
+        networks:
+          - network: { get_param: network }
         db_port: { get_param: db_port }
 
 outputs:

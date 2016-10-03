@@ -20,10 +20,17 @@ parameters:
 
   network:
     type: string
-    description: Name or ID of the network to use for the instances.
+    description: Name or ID of the network to use for the instances
     constraints:
       - custom_constraint: neutron.network
         description: Must identify an network known to Neutron
+
+  keypair_name:
+    type: string
+    description: Keypair to use
+    constraints:
+      - custom_constraint: nova.keypair
+        description: Must be a keypair known to Nova
 
 resources:
   server:
@@ -31,6 +38,7 @@ resources:
     properties:
       image: { get_param: image }
       flavor: { get_param: flavor }
+      key_name: { get_param: keypair_name }
       networks:
         - network: { get_param: network }
 

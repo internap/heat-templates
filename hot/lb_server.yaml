@@ -1,15 +1,31 @@
 heat_template_version: 2013-05-23
 description: A load-balancer server
 parameters:
-  image:
-    type: string
-    description: Image used for servers
-  key_name:
-    type: string
-    description: SSH key to connect to the servers
   flavor:
     type: string
-    description: flavor used by the servers
+    description: Flavor for the instances to be created
+    constraints:
+      - custom_constraint: nova.flavor
+        description: Must be a flavor known to Nova
+  image:
+    type: string
+    description: Name or ID of the image to use for the instances.
+    constraints:
+      - custom_constraint: glance.image
+        description: Must identify an image known to Glance
+  network_wan:
+    type: string
+    description: Name or ID of the publically expose WAN network to use for the instances
+    constraints:
+      - custom_constraint: neutron.network
+        description: Must identify an network known to Neutron
+  key_pair_name:
+    type: string
+    description: Keypair to use
+    constraints:
+      - custom_constraint: nova.keypair
+        description: Must be a keypair known to Nova
+
   pool_id:
     type: string
     description: Pool to contact
@@ -18,9 +34,6 @@ parameters:
     description: Server user_data
   metadata:
     type: json
-  network:
-    type: string
-    description: Network used by the server
 
 resources:
   server:
@@ -28,11 +41,12 @@ resources:
     properties:
       flavor: {get_param: flavor}
       image: {get_param: image}
-      key_name: {get_param: key_name}
+      key_name: {get_param: key_pair_name}
       metadata: {get_param: metadata}
       user_data: {get_param: user_data}
       user_data_format: RAW
-      networks: [{network: {get_param: network} }]
+      networks:
+        - network: { get_param: network_wan }
   member:
     type: OS::Neutron::PoolMember
     properties:
